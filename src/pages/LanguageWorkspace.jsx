@@ -48,7 +48,7 @@ function LanguageWorkspace() {
         </div>
 
         <Link
-          to={`/languages/${language.id}/practice`}
+          to={`/languages/${language.id}/curriculum`}
           className="workspace-primary"
         >
           Continue learning
@@ -97,10 +97,7 @@ function LanguageWorkspace() {
         </div>
 
         <div className="practice-grid">
-          <Link
-            to="#"
-            className="practice-item"
-          >
+          <Link to="#" className="practice-item">
             <Mic size={20} />
 
             <div>
@@ -113,10 +110,7 @@ function LanguageWorkspace() {
             <ArrowRight size={15} />
           </Link>
 
-          <Link
-            to="#"
-            className="practice-item"
-          >
+          <Link to="#" className="practice-item">
             <Headphones size={20} />
 
             <div>
@@ -129,10 +123,7 @@ function LanguageWorkspace() {
             <ArrowRight size={15} />
           </Link>
 
-          <Link
-            to="#"
-            className="practice-item"
-          >
+          <Link to="#" className="practice-item">
             <BookOpen size={20} />
 
             <div>
@@ -145,10 +136,7 @@ function LanguageWorkspace() {
             <ArrowRight size={15} />
           </Link>
 
-          <Link
-            to="#"
-            className="practice-item"
-          >
+          <Link to="#" className="practice-item">
             <PenLine size={20} />
 
             <div>
@@ -170,8 +158,17 @@ function LanguageWorkspace() {
         </div>
 
         <div className="learn-links">
-          <Link to="#">
+          <Link
+            to={`/languages/${language.id}/curriculum`}
+          >
             <BookOpen size={17} />
+            Curriculum
+            <ArrowRight size={14} />
+          </Link>
+
+          <Link
+            to={`/languages/${language.id}/vocabulary`}
+          >
             Vocabulary
             <ArrowRight size={14} />
           </Link>

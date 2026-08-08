@@ -1,47 +1,56 @@
+import { englishCurriculum } from "./content/english/curriculum";
+import { mandarinCurriculum } from "./content/mandarin/curriculum";
+import { japaneseCurriculum } from "./content/japanese/curriculum";
+
 export const languages = [
   {
     id: "english",
     name: "English",
     nativeName: "English",
     flag: "🇬🇧",
-    level: "B2",
-    score: 76,
+    level: "A1",
+    score: 0,
     skills: {
-      speaking: 74,
-      listening: 79,
-      reading: 82,
-      writing: 65,
-      vocabulary: 78,
+      speaking: 0,
+      listening: 0,
+      reading: 0,
+      writing: 0,
+      vocabulary: 0,
     },
+    curriculum: englishCurriculum,
   },
+
   {
     id: "mandarin",
     name: "Mandarin",
     nativeName: "普通话",
     flag: "🇨🇳",
-    level: "A2",
-    score: 54,
+    level: "HSK 1",
+    score: 0,
     skills: {
-      speaking: 48,
-      listening: 61,
-      reading: 59,
-      writing: 42,
-      vocabulary: 55,
+      speaking: 0,
+      listening: 0,
+      reading: 0,
+      writing: 0,
+      vocabulary: 0,
     },
+    curriculum: mandarinCurriculum,
   },
+
   {
     id: "japanese",
     name: "Japanese",
     nativeName: "日本語",
     flag: "🇯🇵",
     level: "N5",
-    score: 41,
+    score: 0,
     skills: {
-      speaking: 38,
-      listening: 46,
-      reading: 44,
-      writing: 35,
-      vocabulary: 43,
+      speaking: 0,
+      listening: 0,
+      reading: 0,
+      writing: 0,
+      vocabulary: 0,
     },
+    curriculum: japaneseCurriculum,
   },
 ];
