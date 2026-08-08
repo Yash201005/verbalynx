@@ -1,0 +1,47 @@
+export const languages = [
+  {
+    id: "english",
+    name: "English",
+    nativeName: "English",
+    flag: "🇬🇧",
+    level: "B2",
+    score: 76,
+    skills: {
+      speaking: 74,
+      listening: 79,
+      reading: 82,
+      writing: 65,
+      vocabulary: 78,
+    },
+  },
+  {
+    id: "mandarin",
+    name: "Mandarin",
+    nativeName: "普通话",
+    flag: "🇨🇳",
+    level: "A2",
+    score: 54,
+    skills: {
+      speaking: 48,
+      listening: 61,
+      reading: 59,
+      writing: 42,
+      vocabulary: 55,
+    },
+  },
+  {
+    id: "japanese",
+    name: "Japanese",
+    nativeName: "日本語",
+    flag: "🇯🇵",
+    level: "N5",
+    score: 41,
+    skills: {
+      speaking: 38,
+      listening: 46,
+      reading: 44,
+      writing: 35,
+      vocabulary: 43,
+    },
+  },
+];
