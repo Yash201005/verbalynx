@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+import jieba
+
 
 HSK_FILE = Path(
     "data/processed/curriculum/mandarin/hsk.json"
@@ -13,6 +15,10 @@ TATOEBA_FILE = Path(
 OUTPUT_FILE = Path(
     "data/processed/curriculum/mandarin/hsk1_with_examples.json"
 )
+
+
+MAX_EXAMPLES = 5
+MAX_SENTENCE_LENGTH = 30
 
 
 def main():
@@ -37,21 +43,37 @@ def main():
     print(f"HSK 1 words: {len(hsk1):,}")
     print(f"Sentences: {len(sentences):,}")
 
+    sentence_tokens = []
+
+    for sentence in sentences:
+        text = sentence["text"].strip()
+
+        if len(text) > MAX_SENTENCE_LENGTH:
+            continue
+
+        tokens = set(jieba.cut(text))
+
+        sentence_tokens.append(
+            (
+                sentence["id"],
+                text,
+                tokens
+            )
+        )
+
     for entry in hsk1:
         word = entry["word"]
 
         examples = []
 
-        for sentence in sentences:
-            text = sentence["text"]
-
-            if word in text:
+        for sentence_id, text, tokens in sentence_tokens:
+            if word in tokens:
                 examples.append({
-                    "id": sentence["id"],
+                    "id": sentence_id,
                     "text": text
                 })
 
-                if len(examples) >= 5:
+                if len(examples) >= MAX_EXAMPLES:
                     break
 
         entry["examples"] = examples
@@ -73,13 +95,26 @@ def main():
         )
 
     matched = sum(
-        1 for entry in hsk1
+        1
+        for entry in hsk1
         if entry["examples"]
     )
 
+    total_examples = sum(
+        len(entry["examples"])
+        for entry in hsk1
+    )
+
     print()
-    print(f"Matched: {matched:,}/{len(hsk1):,}")
-    print(f"Output: {OUTPUT_FILE}")
+    print(
+        f"Matched: {matched:,}/{len(hsk1):,}"
+    )
+    print(
+        f"Examples found: {total_examples:,}"
+    )
+    print(
+        f"Output: {OUTPUT_FILE}"
+    )
 
 
 if __name__ == "__main__":
