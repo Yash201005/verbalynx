@@ -6,6 +6,8 @@ import Dashboard from "./pages/Dashboard";
 import LanguageWorkspace from "./pages/LanguageWorkspace";
 import Curriculum from "./pages/Curriculum";
 import Lesson from "./pages/Lesson";
+import Review from "./pages/Review";
+import Progress from "./pages/Progress";
 
 function App() {
   return (
@@ -32,6 +34,14 @@ function App() {
             element={<Lesson />}
           />
         </Route>
+        <Route
+            path="/review"
+            element={<Review />}
+          />
+          <Route
+            path="/progress"
+            element={<Progress />}
+          />
       </Routes>
     </BrowserRouter>
   );

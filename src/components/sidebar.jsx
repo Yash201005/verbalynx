@@ -5,6 +5,7 @@ import {
   CalendarDays,
   ChartNoAxesColumn,
   Settings,
+  RotateCcw,
 } from "lucide-react";
 
 function Sidebar() {
@@ -29,24 +30,44 @@ function Sidebar() {
           <span>Dashboard</span>
         </NavLink>
 
-        <NavLink to="/languages" className="nav-item">
+        <NavLink
+          to="/languages"
+          className="nav-item"
+        >
           <Languages size={18} />
           <span>My Languages</span>
         </NavLink>
 
-        <NavLink to="/schedule" className="nav-item">
+        <NavLink
+          to="/review"
+          className="nav-item"
+        >
+          <RotateCcw size={18} />
+          <span>Review</span>
+        </NavLink>
+
+        <NavLink
+          to="/schedule"
+          className="nav-item"
+        >
           <CalendarDays size={18} />
           <span>Schedule</span>
         </NavLink>
 
-        <NavLink to="/progress" className="nav-item">
+        <NavLink
+          to="/progress"
+          className="nav-item"
+        >
           <ChartNoAxesColumn size={18} />
           <span>Progress</span>
         </NavLink>
       </nav>
 
       <div className="sidebar-bottom">
-        <NavLink to="/settings" className="nav-item">
+        <NavLink
+          to="/settings"
+          className="nav-item"
+        >
           <Settings size={18} />
           <span>Settings</span>
         </NavLink>
