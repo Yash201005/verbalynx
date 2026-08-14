@@ -17,6 +17,10 @@
   animation: pronunciation-fade-in 0.22s ease;
 }
 
+/* =========================================================
+   POPUP CONTAINER
+   ========================================================= */
+
 .pronunciation-popup {
   position: relative;
 
@@ -33,8 +37,8 @@
   background:
     linear-gradient(
       145deg,
-      rgba(255, 253, 249, 0.96),
-      rgba(245, 237, 225, 0.92)
+      rgba(255, 253, 249, 0.97),
+      rgba(245, 237, 225, 0.94)
     );
 
   box-shadow:
@@ -42,12 +46,29 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
 
   animation: pronunciation-popup-in 0.3s ease;
+
+  scrollbar-width: thin;
+  scrollbar-color: rgba(155, 132, 103, 0.45) transparent;
+}
+
+.pronunciation-popup::-webkit-scrollbar {
+  width: 7px;
+}
+
+.pronunciation-popup::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.pronunciation-popup::-webkit-scrollbar-thumb {
+  border-radius: 99px;
+  background: rgba(155, 132, 103, 0.45);
 }
 
 .pronunciation-popup-close {
   position: absolute;
   top: 15px;
   right: 17px;
+  z-index: 10;
 
   width: 34px;
   height: 34px;
@@ -73,6 +94,10 @@
   transform: rotate(8deg);
   background: #fff;
 }
+
+/* =========================================================
+   LYNX HERO
+   ========================================================= */
 
 .pronunciation-hero {
   position: relative;
@@ -181,7 +206,13 @@
     0 7px 20px rgba(60, 45, 30, 0.07);
 
   animation: speech-float 2.5s ease-in-out infinite;
+
+  white-space: nowrap;
 }
+
+/* =========================================================
+   GENERAL HEADING
+   ========================================================= */
 
 .pronunciation-heading {
   text-align: center;
@@ -194,6 +225,8 @@
 
   font-size: 48px;
   font-weight: 600;
+
+  line-height: 1.08;
 }
 
 .popup-pinyin {
@@ -202,6 +235,7 @@
   color: #846c50;
 
   font-size: 22px;
+  line-height: 1.35;
 }
 
 .popup-meaning {
@@ -213,6 +247,10 @@
 
   font-size: 13px;
 }
+
+/* =========================================================
+   MANDARIN SYLLABLES
+   ========================================================= */
 
 .pronunciation-syllables {
   display: grid;
@@ -284,6 +322,7 @@
   color: #765d42;
 
   font-size: 28px;
+  line-height: 1.2;
 }
 
 .syllable-tone {
@@ -351,6 +390,316 @@
   text-align: center;
 }
 
+/* =========================================================
+   ENGLISH PRONUNCIATION
+   ========================================================= */
+
+.english-pronunciation {
+  margin-top: 28px;
+}
+
+/*
+  Small information strip:
+  SYLLABLES · PHONETIC SYMBOLS · HOW THE WORD SOUNDS
+*/
+
+.english-pronunciation-meta {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+
+  gap: 10px;
+
+  margin-bottom: 18px;
+}
+
+.english-meta-item {
+  min-height: 62px;
+
+  padding: 11px 13px;
+
+  border: 1px solid #e7dccb;
+  border-radius: 14px;
+
+  background: rgba(255, 253, 249, 0.62);
+
+  text-align: left;
+}
+
+.english-meta-label {
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: #a09283;
+
+  font-size: 9px;
+  font-weight: 700;
+
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.english-meta-value {
+  display: block;
+
+  color: #5d4d3d;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  line-height: 1.35;
+}
+
+/*
+  The sentence above the syllable cards.
+*/
+
+.english-breakdown-intro {
+  margin: 0 0 13px;
+
+  color: #897d70;
+
+  font-size: 11px;
+  line-height: 1.5;
+
+  text-align: center;
+}
+
+/*
+  English syllable cards.
+*/
+
+.english-syllables {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(150px, 1fr)
+    );
+
+  gap: 12px;
+
+  margin-top: 16px;
+}
+
+.english-syllable {
+  position: relative;
+
+  min-height: 170px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px 16px 28px;
+
+  border: 1px solid #e6dbca;
+  border-radius: 18px;
+
+  background: rgba(255, 253, 249, 0.72);
+
+  color: #403a34;
+
+  cursor: pointer;
+
+  text-align: center;
+
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    background 0.25s ease;
+}
+
+.english-syllable:hover,
+.english-syllable.is-active {
+  transform: translateY(-5px);
+
+  border-color: #c7a675;
+
+  background: rgba(255, 252, 245, 0.98);
+
+  box-shadow:
+    0 13px 28px rgba(90, 65, 35, 0.1);
+}
+
+.english-syllable-number {
+  margin-bottom: 13px;
+
+  color: #b2a496;
+
+  font-size: 9px;
+  font-weight: 700;
+
+  letter-spacing: 0.12em;
+}
+
+.english-syllable-word {
+  color: #765d42;
+
+  font-size: 28px;
+  font-weight: 600;
+
+  line-height: 1.2;
+}
+
+.english-syllable-ipa {
+  margin-top: 9px;
+
+  color: #6f6254;
+
+  font-family:
+    "Times New Roman",
+    serif;
+
+  font-size: 18px;
+
+  line-height: 1.2;
+}
+
+.english-syllable-role {
+  margin-top: 7px;
+
+  color: #968b80;
+
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.english-syllable-audio {
+  position: absolute;
+
+  right: 10px;
+  bottom: 9px;
+
+  font-size: 12px;
+
+  opacity: 0.5;
+}
+
+/*
+  Example:
+  /hə/ /ˈloʊ/
+*/
+
+.english-phonetic-breakdown {
+  margin-top: 22px;
+  padding: 15px 17px;
+
+  border: 1px solid #e5dac9;
+  border-radius: 15px;
+
+  background: rgba(255, 253, 249, 0.58);
+}
+
+.english-phonetic-breakdown-label {
+  display: block;
+
+  margin-bottom: 7px;
+
+  color: #9b8b7a;
+
+  font-size: 9px;
+  font-weight: 700;
+
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.english-phonetic-breakdown-value {
+  color: #705c45;
+
+  font-family:
+    "Times New Roman",
+    serif;
+
+  font-size: 20px;
+
+  line-height: 1.35;
+
+  text-align: center;
+}
+
+/*
+  Highlight which part of the word is stressed.
+*/
+
+.english-stress-note {
+  margin-top: 10px;
+
+  color: #91867c;
+
+  font-size: 10px;
+  line-height: 1.5;
+
+  text-align: center;
+}
+
+.english-stress-note strong {
+  color: #765d42;
+}
+
+/* =========================================================
+   JAPANESE PRONUNCIATION
+   ========================================================= */
+
+.japanese-pronunciation {
+  margin-top: 28px;
+}
+
+.japanese-pronunciation-meta {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+
+  gap: 10px;
+
+  margin-bottom: 18px;
+}
+
+.japanese-meta-item {
+  min-height: 62px;
+
+  padding: 11px 13px;
+
+  border: 1px solid #e7dccb;
+  border-radius: 14px;
+
+  background: rgba(255, 253, 249, 0.62);
+}
+
+.japanese-meta-label {
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: #a09283;
+
+  font-size: 9px;
+  font-weight: 700;
+
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.japanese-meta-value {
+  display: block;
+
+  color: #5d4d3d;
+
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* =========================================================
+   PRONUNCIATION ACTIONS
+   ========================================================= */
+
 .pronunciation-actions {
   display: flex;
   justify-content: center;
@@ -370,7 +719,8 @@
 
   transition:
     transform 0.2s ease,
-    background 0.2s ease;
+    background 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .pronunciation-main-button {
@@ -407,6 +757,21 @@
   transform: translateY(-2px);
 }
 
+.pronunciation-main-button:hover {
+  background: #211f1c;
+
+  box-shadow:
+    0 7px 16px rgba(48, 45, 41, 0.15);
+}
+
+.pronunciation-slow-button:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+
 .pronunciation-footer {
   display: flex;
   justify-content: center;
@@ -420,6 +785,10 @@
 
   font-size: 10px;
 }
+
+/* =========================================================
+   COMING SOON
+   ========================================================= */
 
 .pronunciation-coming-soon {
   padding: 45px 20px 30px;
@@ -444,12 +813,15 @@
   font-size: 13px;
 }
 
-.pronunciation-coming-soon
-  .pronunciation-lynx {
+.pronunciation-coming-soon .pronunciation-lynx {
   margin: 0 auto 20px;
 
   font-size: 60px;
 }
+
+/* =========================================================
+   ANIMATIONS
+   ========================================================= */
 
 @keyframes pronunciation-fade-in {
   from {
@@ -542,7 +914,9 @@
   }
 
   50% {
-    transform: rotate(-12deg) translateY(-4px);
+    transform:
+      rotate(-12deg)
+      translateY(-4px);
   }
 }
 
@@ -553,7 +927,9 @@
   }
 
   50% {
-    transform: rotate(-5deg) translateY(-7px);
+    transform:
+      rotate(-5deg)
+      translateY(-7px);
   }
 }
 
@@ -563,7 +939,9 @@
   }
 
   45% {
-    transform: rotate(18deg) translateY(8px);
+    transform:
+      rotate(18deg)
+      translateY(8px);
   }
 
   100% {
@@ -577,7 +955,9 @@
   }
 
   100% {
-    transform: rotate(-42deg) translateY(7px);
+    transform:
+      rotate(-42deg)
+      translateY(7px);
   }
 }
 
@@ -588,9 +968,15 @@
   }
 
   50% {
-    transform: rotate(-20deg) translateY(-2px);
+    transform:
+      rotate(-20deg)
+      translateY(-2px);
   }
 }
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
 
 @media (max-width: 600px) {
   .pronunciation-modal {
@@ -599,6 +985,7 @@
 
   .pronunciation-popup {
     padding: 26px 18px 22px;
+
     border-radius: 22px;
   }
 
@@ -610,8 +997,49 @@
     grid-template-columns: 1fr 1fr;
   }
 
+  .english-pronunciation-meta,
+  .japanese-pronunciation-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .english-syllables {
+    grid-template-columns: 1fr 1fr;
+  }
+
   .lynx-speech {
     left: auto;
     right: 4px;
+  }
+}
+
+@media (max-width: 420px) {
+  .pronunciation-popup {
+    padding: 24px 14px 20px;
+  }
+
+  .pronunciation-hero {
+    min-height: 115px;
+  }
+
+  .pronunciation-heading h2 {
+    font-size: 34px;
+  }
+
+  .popup-pinyin {
+    font-size: 19px;
+  }
+
+  .pronunciation-syllables,
+  .english-syllables {
+    grid-template-columns: 1fr;
+  }
+
+  .english-pronunciation-meta,
+  .japanese-pronunciation-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .pronunciation-actions {
+    margin-top: 18px;
   }
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./PronunciationPopup.css";
 
 const TONE_INFO = {
@@ -17,24 +17,30 @@ const TONE_CURVE = {
   5: "·",
 };
 
-function getSyllables(vocabulary) {
-  const generatedSyllables =
-    vocabulary.pronunciation?.syllables;
-
-  if (
-    Array.isArray(generatedSyllables) &&
-    generatedSyllables.length > 0
-  ) {
-    return generatedSyllables;
-  }
-
-  const pinyin =
-    vocabulary.pronunciation?.pinyin || "";
-
+function splitMandarinPinyin(pinyin = "") {
   return pinyin
     .trim()
     .split(/\s+/)
     .filter(Boolean);
+}
+
+function getEnglishSyllables(pronunciation) {
+  if (!pronunciation) {
+    return [];
+  }
+
+  const syllables =
+    pronunciation.syllables || [];
+
+  const ipaSyllables =
+    pronunciation.ipaSyllables || [];
+
+  return syllables.map(
+    (syllable, index) => ({
+      text: syllable,
+      ipa: ipaSyllables[index] || "",
+    })
+  );
 }
 
 function PronunciationPopup({
@@ -46,35 +52,94 @@ function PronunciationPopup({
   const [activeSyllable, setActiveSyllable] =
     useState(0);
 
+  const normalizedLanguage =
+    languageId?.toLowerCase();
+
   const isMandarin =
-    languageId?.toLowerCase() ===
-    "mandarin";
+    normalizedLanguage === "mandarin";
+
+  const isEnglish =
+    normalizedLanguage === "english";
+
+  const isJapanese =
+    normalizedLanguage === "japanese";
+
+  /*
+    ---------------------------------------------------------
+    MANDARIN DATA
+    ---------------------------------------------------------
+  */
 
   const pinyin =
-    vocabulary.pronunciation?.pinyin || "";
+    vocabulary?.pronunciation?.pinyin ||
+    "";
 
   const tones =
-    vocabulary.pronunciation?.tones || [];
+    vocabulary?.pronunciation?.tones ||
+    [];
 
-  const syllables =
-    getSyllables(vocabulary);
+  const mandarinSyllables = useMemo(
+    () =>
+      splitMandarinPinyin(
+        pinyin
+      ),
+    [pinyin]
+  );
 
   const toneDataMatches =
-    syllables.length === tones.length;
+    mandarinSyllables.length ===
+    tones.length;
 
   /*
-    Reset the active syllable whenever
-    another vocabulary item is opened.
+    ---------------------------------------------------------
+    ENGLISH DATA
+    ---------------------------------------------------------
   */
+
+  const englishPronunciation =
+    isEnglish
+      ? vocabulary?.pronunciation
+      : null;
+
+  const englishSyllables = useMemo(
+    () =>
+      getEnglishSyllables(
+        englishPronunciation
+      ),
+    [englishPronunciation]
+  );
+
+  /*
+    ---------------------------------------------------------
+    JAPANESE DATA
+    ---------------------------------------------------------
+  */
+
+  const japanesePronunciation =
+    isJapanese
+      ? vocabulary?.pronunciation
+      : null;
+
+  /*
+    ---------------------------------------------------------
+    RESET ACTIVE SYLLABLE
+    ---------------------------------------------------------
+  */
+
   useEffect(() => {
     setActiveSyllable(0);
-  }, [vocabulary.id]);
+  }, [vocabulary?.id]);
 
   /*
-    Allow Escape to close the popup.
+    ---------------------------------------------------------
+    ESCAPE KEY
+    ---------------------------------------------------------
   */
+
   useEffect(() => {
-    const handleKeyDown = (event) => {
+    const handleKeyDown = (
+      event
+    ) => {
       if (event.key === "Escape") {
         onClose();
       }
@@ -94,55 +159,99 @@ function PronunciationPopup({
   }, [onClose]);
 
   /*
-    Automatically move through the syllables
-    when the Mandarin popup is open.
-
-    The animation only runs when we have
-    matching syllable and tone data.
+    ---------------------------------------------------------
+    MANDARIN AUTO SYLLABLE ANIMATION
+    ---------------------------------------------------------
   */
+
   useEffect(() => {
     if (
       !isMandarin ||
       !toneDataMatches ||
-      syllables.length <= 1
+      mandarinSyllables.length <= 1
     ) {
       return undefined;
     }
 
-    const timer = window.setInterval(() => {
-      setActiveSyllable((current) =>
-        current >= syllables.length - 1
-          ? 0
-          : current + 1
-      );
-    }, 1600);
+    const timer =
+      window.setInterval(() => {
+        setActiveSyllable(
+          (current) =>
+            current >=
+            mandarinSyllables.length - 1
+              ? 0
+              : current + 1
+        );
+      }, 1600);
 
     return () => {
-      window.clearInterval(timer);
+      window.clearInterval(
+        timer
+      );
     };
   }, [
     isMandarin,
     toneDataMatches,
-    syllables.length,
+    mandarinSyllables.length,
   ]);
 
   /*
-    Play an individual Mandarin syllable.
-
-    We use the corresponding Chinese character
-    when possible instead of trying to make the
-    browser pronounce the pinyin itself.
+    ---------------------------------------------------------
+    ENGLISH AUTO SYLLABLE ANIMATION
+    ---------------------------------------------------------
   */
-  const playSyllable = (index) => {
+
+  useEffect(() => {
+    if (
+      !isEnglish ||
+      englishSyllables.length <= 1
+    ) {
+      return undefined;
+    }
+
+    const timer =
+      window.setInterval(() => {
+        setActiveSyllable(
+          (current) =>
+            current >=
+            englishSyllables.length - 1
+              ? 0
+              : current + 1
+        );
+      }, 1500);
+
+    return () => {
+      window.clearInterval(
+        timer
+      );
+    };
+  }, [
+    isEnglish,
+    englishSyllables.length,
+  ]);
+
+  /*
+    ---------------------------------------------------------
+    PLAY INDIVIDUAL MANDARIN SYLLABLE
+    ---------------------------------------------------------
+  */
+
+  const playMandarinSyllable = (
+    index
+  ) => {
     const characters = [
-      ...vocabulary.word,
+      ...(
+        vocabulary?.word || ""
+      ),
     ].filter((character) =>
-      /[\u3400-\u9fff]/.test(character)
+      /[\u3400-\u9fff]/.test(
+        character
+      )
     );
 
     const character =
       characters[index] ||
-      vocabulary.word;
+      vocabulary?.word;
 
     setActiveSyllable(index);
 
@@ -154,9 +263,16 @@ function PronunciationPopup({
   };
 
   /*
-    Play the complete word.
+    ---------------------------------------------------------
+    PLAY ENGLISH WORD
+    ---------------------------------------------------------
   */
-  const playWord = (rate = 0.65) => {
+
+  const playEnglishWord = (
+    rate = 0.65
+  ) => {
+    setActiveSyllable(0);
+
     onSpeak(
       vocabulary.word,
       `${vocabulary.id}-popup-${rate}`,
@@ -165,18 +281,37 @@ function PronunciationPopup({
   };
 
   /*
-    English and Japanese will eventually use
-    their own pronunciation modules.
-
-    We deliberately do not display Mandarin
-    pronunciation information for them.
+    ---------------------------------------------------------
+    PLAY JAPANESE WORD
+    ---------------------------------------------------------
   */
-  if (!isMandarin) {
+
+  const playJapaneseWord = (
+    rate = 0.65
+  ) => {
+    setActiveSyllable(0);
+
+    onSpeak(
+      vocabulary.word,
+      `${vocabulary.id}-popup-${rate}`,
+      rate
+    );
+  };
+
+  /*
+    ---------------------------------------------------------
+    UNKNOWN / FALLBACK LANGUAGE
+    ---------------------------------------------------------
+  */
+
+  if (
+    !isMandarin &&
+    !isEnglish &&
+    !isJapanese
+  ) {
     return (
       <div
         className="pronunciation-modal"
-        role="dialog"
-        aria-modal="true"
         onMouseDown={(event) => {
           if (
             event.target ===
@@ -187,6 +322,7 @@ function PronunciationPopup({
         }}
       >
         <div className="pronunciation-popup">
+
           <button
             type="button"
             className="pronunciation-popup-close"
@@ -197,6 +333,7 @@ function PronunciationPopup({
           </button>
 
           <div className="pronunciation-coming-soon">
+
             <div className="pronunciation-lynx">
               🐾
             </div>
@@ -206,99 +343,119 @@ function PronunciationPopup({
             </span>
 
             <h2>
-              {languageId?.toLowerCase() ===
-              "japanese"
-                ? "Japanese pronunciation"
-                : "English pronunciation"}
+              Pronunciation
             </h2>
 
             <p>
-              The language-specific pronunciation
-              data is not connected yet.
+              Pronunciation support for
+              this language is not
+              connected yet.
             </p>
+
           </div>
+
         </div>
       </div>
     );
   }
 
-  return (
-    <div
-      className="pronunciation-modal"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="pronunciation-title"
-      onMouseDown={(event) => {
-        if (
-          event.target ===
-          event.currentTarget
-        ) {
-          onClose();
-        }
-      }}
-    >
-      <div className="pronunciation-popup">
-        <button
-          type="button"
-          className="pronunciation-popup-close"
-          onClick={onClose}
-          aria-label="Close pronunciation coach"
-        >
-          ×
-        </button>
+  /*
+    =========================================================
+    MANDARIN POPUP
+    =========================================================
+  */
 
-        <div className="pronunciation-hero">
-          <div
-            className={`pronunciation-lynx tone-${
-              tones[activeSyllable] || 0
-            }`}
+  if (isMandarin) {
+    return (
+      <div
+        className="pronunciation-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="pronunciation-title"
+        onMouseDown={(event) => {
+          if (
+            event.target ===
+            event.currentTarget
+          ) {
+            onClose();
+          }
+        }}
+      >
+
+        <div className="pronunciation-popup">
+
+          <button
+            type="button"
+            className="pronunciation-popup-close"
+            onClick={onClose}
+            aria-label="Close pronunciation coach"
           >
-            <span className="lynx-tail">
-              〰
-            </span>
+            ×
+          </button>
 
-            <span className="lynx-character">
-              🐈
-            </span>
+          <div className="pronunciation-hero">
 
-            <span className="lynx-paw">
-              🐾
-            </span>
+            <div
+              className={`pronunciation-lynx tone-${
+                tones[
+                  activeSyllable
+                ] || 0
+              }`}
+            >
+
+              <span className="lynx-tail">
+                〰
+              </span>
+
+              <span className="lynx-character">
+                🐈
+              </span>
+
+              <span className="lynx-paw">
+                🐾
+              </span>
+
+            </div>
+
+            <div className="lynx-speech">
+              <span>🐾</span>
+
+              <strong>
+                Let&apos;s break it down!
+              </strong>
+            </div>
+
           </div>
 
-          <div className="lynx-speech">
-            <span>🐾</span>
+          <div className="pronunciation-heading">
 
-            <strong>
-              Let&apos;s break it down!
-            </strong>
+            <span className="content-label">
+              PRONUNCIATION COACH
+            </span>
+
+            <h2 id="pronunciation-title">
+              {vocabulary.word}
+            </h2>
+
+            <p className="popup-pinyin">
+              {pinyin}
+            </p>
+
+            <span className="popup-meaning">
+              {vocabulary.meaning}
+            </span>
+
           </div>
-        </div>
 
-        <div className="pronunciation-heading">
-          <span className="content-label">
-            PRONUNCIATION COACH
-          </span>
-
-          <h2 id="pronunciation-title">
-            {vocabulary.word}
-          </h2>
-
-          <p className="popup-pinyin">
-            {pinyin ||
-              "Pronunciation unavailable"}
-          </p>
-
-          <span className="popup-meaning">
-            {vocabulary.meaning}
-          </span>
-        </div>
-
-        {syllables.length > 0 ? (
           <div className="pronunciation-syllables">
-            {syllables.map(
-              (syllable, index) => {
-                const tone = tones[index];
+
+            {mandarinSyllables.map(
+              (
+                syllable,
+                index
+              ) => {
+                const tone =
+                  tones[index];
 
                 return (
                   <button
@@ -311,13 +468,19 @@ function PronunciationPopup({
                         : ""
                     }`}
                     onClick={() =>
-                      playSyllable(index)
+                      playMandarinSyllable(
+                        index
+                      )
                     }
                   >
+
                     <span className="syllable-number">
                       {String(
                         index + 1
-                      ).padStart(2, "0")}
+                      ).padStart(
+                        2,
+                        "0"
+                      )}
                     </span>
 
                     <strong>
@@ -357,36 +520,524 @@ function PronunciationPopup({
                     <span className="syllable-audio">
                       🔊
                     </span>
+
                   </button>
                 );
               }
             )}
-          </div>
-        ) : (
-          <div className="pronunciation-empty">
-            <p>
-              Syllable information is not
-              available for this word yet.
-            </p>
-          </div>
-        )}
 
-        {!toneDataMatches &&
-          syllables.length > 0 && (
-            <p className="pronunciation-note">
-              The curriculum does not provide
-              one tone value for every displayed
-              syllable, so VerbaLynx will not
-              guess the missing information.
+          </div>
+
+          {!toneDataMatches &&
+            mandarinSyllables.length >
+              0 && (
+              <p className="pronunciation-note">
+                The curriculum does not
+                provide one tone value
+                for every displayed
+                syllable, so VerbaLynx
+                will not guess the
+                missing information.
+              </p>
+            )}
+
+          <div className="pronunciation-actions">
+
+            <button
+              type="button"
+              className="pronunciation-main-button"
+              onClick={() =>
+                onSpeak(
+                  vocabulary.word,
+                  `${vocabulary.id}-popup-0.65`,
+                  0.65
+                )
+              }
+            >
+              <span>▶</span>
+              Listen
+            </button>
+
+            <button
+              type="button"
+              className="pronunciation-slow-button"
+              onClick={() =>
+                onSpeak(
+                  vocabulary.word,
+                  `${vocabulary.id}-popup-0.4`,
+                  0.4
+                )
+              }
+            >
+              Slow
+            </button>
+
+          </div>
+
+          <div className="pronunciation-footer">
+
+            <span>
+              Listen → repeat → master
+            </span>
+
+            <span>
+              🐾
+            </span>
+
+          </div>
+
+        </div>
+
+      </div>
+    );
+  }
+
+  /*
+    =========================================================
+    ENGLISH POPUP
+    =========================================================
+  */
+
+  if (isEnglish) {
+    return (
+      <div
+        className="pronunciation-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="pronunciation-title"
+        onMouseDown={(event) => {
+          if (
+            event.target ===
+            event.currentTarget
+          ) {
+            onClose();
+          }
+        }}
+      >
+
+        <div className="pronunciation-popup">
+
+          <button
+            type="button"
+            className="pronunciation-popup-close"
+            onClick={onClose}
+            aria-label="Close pronunciation coach"
+          >
+            ×
+          </button>
+
+          <div className="pronunciation-hero">
+
+            <div className="pronunciation-lynx">
+
+              <span className="lynx-tail">
+                〰
+              </span>
+
+              <span className="lynx-character">
+                🐈
+              </span>
+
+              <span className="lynx-paw">
+                🐾
+              </span>
+
+            </div>
+
+            <div className="lynx-speech">
+              <span>🐾</span>
+
+              <strong>
+                Let&apos;s say it clearly!
+              </strong>
+            </div>
+
+          </div>
+
+          <div className="pronunciation-heading">
+
+            <span className="content-label">
+              ENGLISH PRONUNCIATION COACH
+            </span>
+
+            <h2 id="pronunciation-title">
+              {vocabulary.word}
+            </h2>
+
+            <p className="popup-pinyin">
+              {englishPronunciation?.ipa ||
+                "IPA unavailable"}
             </p>
-          )}
+
+            <span className="popup-meaning">
+              {vocabulary.meaning}
+            </span>
+
+          </div>
+
+          <div className="pronunciation-syllables">
+
+            {englishSyllables.length >
+            0 ? (
+              englishSyllables.map(
+                (
+                  syllable,
+                  index
+                ) => (
+                  <button
+                    type="button"
+                    key={`${vocabulary.id}-english-${index}`}
+                    className={`pronunciation-syllable ${
+                      index ===
+                      activeSyllable
+                        ? "is-active"
+                        : ""
+                    }`}
+                    onClick={() => {
+                      setActiveSyllable(
+                        index
+                      );
+
+                      onSpeak(
+                        vocabulary.word,
+                        `${vocabulary.id}-english-${index}`,
+                        0.5
+                      );
+                    }}
+                  >
+
+                    <span className="syllable-number">
+                      {String(
+                        index + 1
+                      ).padStart(
+                        2,
+                        "0"
+                      )}
+                    </span>
+
+                    <strong>
+                      {syllable.text}
+                    </strong>
+
+                    <span className="syllable-tone">
+                      IPA
+                    </span>
+
+                    <span className="tone-curve">
+                      {syllable.ipa ||
+                        "—"}
+                    </span>
+
+                    <small>
+                      Pronunciation part{" "}
+                      {index + 1}
+                    </small>
+
+                    <span className="syllable-audio">
+                      🔊
+                    </span>
+
+                  </button>
+                )
+              )
+            ) : (
+              <div className="pronunciation-note">
+                English syllable data is
+                unavailable for this word.
+              </div>
+            )}
+
+          </div>
+
+          <div className="pronunciation-guide">
+
+            <div className="guide-header">
+
+              <span className="content-label">
+                PHONETIC BREAKDOWN
+              </span>
+
+              <span className="guide-note">
+                IPA from CMU Pronouncing
+                Dictionary data
+              </span>
+
+            </div>
+
+            <div className="guide-content">
+
+              <div className="guide-pinyin">
+                {englishPronunciation?.ipa ||
+                  "IPA unavailable"}
+              </div>
+
+              {englishPronunciation
+                ?.cmu && (
+                <div className="guide-tones">
+
+                  <div className="guide-tone">
+
+                    <span>
+                      CMU
+                    </span>
+
+                    <strong>
+                      {
+                        englishPronunciation
+                          .cmu
+                      }
+                    </strong>
+
+                    <small>
+                      Pronunciation
+                      dictionary notation
+                    </small>
+
+                  </div>
+
+                </div>
+              )}
+
+            </div>
+
+          </div>
+
+          <div className="pronunciation-actions">
+
+            <button
+              type="button"
+              className="pronunciation-main-button"
+              onClick={() =>
+                playEnglishWord(
+                  0.65
+                )
+              }
+            >
+              <span>▶</span>
+              Listen
+            </button>
+
+            <button
+              type="button"
+              className="pronunciation-slow-button"
+              onClick={() =>
+                playEnglishWord(
+                  0.4
+                )
+              }
+            >
+              Slow
+            </button>
+
+          </div>
+
+          <div className="pronunciation-footer">
+
+            <span>
+              Listen → repeat → master
+            </span>
+
+            <span>
+              🐾
+            </span>
+
+          </div>
+
+        </div>
+
+      </div>
+    );
+  }
+
+  /*
+    =========================================================
+    JAPANESE POPUP
+    =========================================================
+  */
+
+  return (
+    <div
+      className="pronunciation-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="pronunciation-title"
+      onMouseDown={(event) => {
+        if (
+          event.target ===
+          event.currentTarget
+        ) {
+          onClose();
+        }
+      }}
+    >
+
+      <div className="pronunciation-popup">
+
+        <button
+          type="button"
+          className="pronunciation-popup-close"
+          onClick={onClose}
+          aria-label="Close pronunciation coach"
+        >
+          ×
+        </button>
+
+        <div className="pronunciation-hero">
+
+          <div className="pronunciation-lynx">
+
+            <span className="lynx-tail">
+              〰
+            </span>
+
+            <span className="lynx-character">
+              🐈
+            </span>
+
+            <span className="lynx-paw">
+              🐾
+            </span>
+
+          </div>
+
+          <div className="lynx-speech">
+
+            <span>🐾</span>
+
+            <strong>
+              Let&apos;s break it down!
+            </strong>
+
+          </div>
+
+        </div>
+
+        <div className="pronunciation-heading">
+
+          <span className="content-label">
+            JAPANESE PRONUNCIATION COACH
+          </span>
+
+          <h2 id="pronunciation-title">
+            {vocabulary.word}
+          </h2>
+
+          <p className="popup-pinyin">
+            {
+              japanesePronunciation
+                ?.romanization
+            }
+          </p>
+
+          <span className="popup-meaning">
+            {vocabulary.meaning}
+          </span>
+
+        </div>
+
+        <div className="pronunciation-syllables">
+
+          <div
+            className="pronunciation-syllable is-active"
+          >
+
+            <span className="syllable-number">
+              01
+            </span>
+
+            <strong>
+              {
+                japanesePronunciation
+                  ?.kana ||
+                vocabulary.word
+              }
+            </strong>
+
+            <span className="syllable-tone">
+              ROMANIZATION
+            </span>
+
+            <span className="tone-curve">
+              {
+                japanesePronunciation
+                  ?.romanization ||
+                "—"
+              }
+            </span>
+
+            <small>
+              Japanese pronunciation
+            </small>
+
+            <span className="syllable-audio">
+              🔊
+            </span>
+
+          </div>
+
+        </div>
+
+        <div className="pronunciation-guide">
+
+          <div className="guide-header">
+
+            <span className="content-label">
+              PRONUNCIATION
+            </span>
+
+            <span className="guide-note">
+              Listen first, then repeat
+            </span>
+
+          </div>
+
+          <div className="guide-content">
+
+            <div className="guide-pinyin">
+              {
+                japanesePronunciation
+                  ?.kana
+              }
+            </div>
+
+            <div className="guide-tones">
+
+              <div className="guide-tone">
+
+                <span>
+                  IPA
+                </span>
+
+                <strong>
+                  {
+                    japanesePronunciation
+                      ?.ipa ||
+                    "Unavailable"
+                  }
+                </strong>
+
+                <small>
+                  Japanese phonetic
+                  transcription
+                </small>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
 
         <div className="pronunciation-actions">
+
           <button
             type="button"
             className="pronunciation-main-button"
             onClick={() =>
-              playWord(0.65)
+              playJapaneseWord(
+                0.65
+              )
             }
           >
             <span>▶</span>
@@ -397,21 +1048,30 @@ function PronunciationPopup({
             type="button"
             className="pronunciation-slow-button"
             onClick={() =>
-              playWord(0.4)
+              playJapaneseWord(
+                0.4
+              )
             }
           >
             Slow
           </button>
+
         </div>
 
         <div className="pronunciation-footer">
+
           <span>
             Listen → repeat → master
           </span>
 
-          <span>🐾</span>
+          <span>
+            🐾
+          </span>
+
         </div>
+
       </div>
+
     </div>
   );
 }
