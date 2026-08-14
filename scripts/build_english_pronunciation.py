@@ -5,248 +5,14 @@ from pathlib import Path
 import pronouncing
 
 
-BASE_DIR = Path(
-    "data/processed/curriculum/english"
-)
-
 INPUT_FILE = Path(
-    "src/data/content/english/vocabulary/a1.js"
+    "data/processed/curriculum/english/a1_with_pronunciation.json"
 )
 
-OUTPUT_FILE = (
-    BASE_DIR /
-    "a1_with_pronunciation.json"
+OUTPUT_FILE = Path(
+    "data/processed/curriculum/english/a1_with_pronunciation.json"
 )
 
-
-# =========================================================
-# JAVASCRIPT VOCABULARY LOADING
-# =========================================================
-
-def extract_array(text):
-    start = text.find("[")
-
-    if start == -1:
-        raise ValueError(
-            "Could not find the beginning of the vocabulary array."
-        )
-
-    depth = 0
-    in_string = False
-    string_quote = None
-    escaped = False
-
-    for index in range(
-        start,
-        len(text)
-    ):
-        character = text[index]
-
-        if in_string:
-            if escaped:
-                escaped = False
-                continue
-
-            if character == "\\":
-                escaped = True
-                continue
-
-            if character == string_quote:
-                in_string = False
-                string_quote = None
-
-            continue
-
-        if character in ('"', "'"):
-            in_string = True
-            string_quote = character
-            continue
-
-        if character == "[":
-            depth += 1
-
-        elif character == "]":
-            depth -= 1
-
-            if depth == 0:
-                return text[
-                    start:index + 1
-                ]
-
-    raise ValueError(
-        "Could not find the end of the vocabulary array."
-    )
-
-
-def convert_js_to_json(text):
-    text = re.sub(
-        r"//.*?$",
-        "",
-        text,
-        flags=re.MULTILINE
-    )
-
-    text = re.sub(
-        r"/\*.*?\*/",
-        "",
-        text,
-        flags=re.DOTALL
-    )
-
-    def convert_single_quotes(match):
-        value = match.group(1)
-
-        value = value.replace(
-            '"',
-            '\\"'
-        )
-
-        return f'"{value}"'
-
-    text = re.sub(
-        r"'([^'\\]*(?:\\.[^'\\]*)*)'",
-        convert_single_quotes,
-        text
-    )
-
-    text = re.sub(
-        r'([{,]\s*)([A-Za-z_$][A-Za-z0-9_$]*)\s*:',
-        r'\1"\2":',
-        text
-    )
-
-    text = re.sub(
-        r",(\s*[}\]])",
-        r"\1",
-        text
-    )
-
-    return text
-
-
-def load_vocabulary():
-    print(
-        f"Reading vocabulary from: "
-        f"{INPUT_FILE}"
-    )
-
-    if not INPUT_FILE.exists():
-        raise FileNotFoundError(
-            f"Vocabulary file not found:\n"
-            f"{INPUT_FILE}"
-        )
-
-    text = INPUT_FILE.read_text(
-        encoding="utf-8"
-    )
-
-    array_text = extract_array(
-        text
-    )
-
-    json_text = convert_js_to_json(
-        array_text
-    )
-
-    vocabulary = json.loads(
-        json_text
-    )
-
-    if not isinstance(
-        vocabulary,
-        list
-    ):
-        raise ValueError(
-            "Vocabulary file did not contain an array."
-        )
-
-    return vocabulary
-
-
-# =========================================================
-# CMU PRONUNCIATION
-# =========================================================
-
-def normalize_word(word):
-    return (
-        str(word)
-        .strip()
-        .lower()
-    )
-
-
-def get_pronunciation(word):
-    normalized = normalize_word(
-        word
-    )
-
-    if not normalized:
-        return None
-
-    pronunciations = (
-        pronouncing
-        .phones_for_word(
-            normalized
-        )
-    )
-
-    if not pronunciations:
-        return None
-
-    return pronunciations[0]
-
-
-def remove_stress(phone):
-    return re.sub(
-        r"[012]$",
-        "",
-        phone
-    )
-
-
-def phone_has_stress(phone):
-    return bool(
-        re.search(
-            r"[012]$",
-            phone
-        )
-    )
-
-
-def split_into_syllables(phones):
-    syllables = []
-    current = []
-
-    for phone in phones:
-        current.append(
-            phone
-        )
-
-        if phone_has_stress(
-            phone
-        ):
-            syllables.append(
-                current
-            )
-
-            current = []
-
-    if current:
-        if syllables:
-            syllables[-1].extend(
-                current
-            )
-        else:
-            syllables.append(
-                current
-            )
-
-    return syllables
-
-
-# =========================================================
-# CMU → IPA
-# =========================================================
 
 CMU_TO_IPA = {
     "AA": "ɑ",
@@ -292,67 +58,182 @@ CMU_TO_IPA = {
 }
 
 
-def phoneme_to_ipa(phone):
-    base = remove_stress(
+def load_vocabulary():
+    print(
+        f"Reading vocabulary from: {INPUT_FILE}"
+    )
+
+    if not INPUT_FILE.exists():
+        raise FileNotFoundError(
+            f"Vocabulary file not found:\n"
+            f"{INPUT_FILE}"
+        )
+
+    with INPUT_FILE.open(
+        "r",
+        encoding="utf-8"
+    ) as file:
+        vocabulary = json.load(file)
+
+    if not isinstance(
+        vocabulary,
+        list
+    ):
+        raise ValueError(
+            "Vocabulary JSON must contain an array."
+        )
+
+    return vocabulary
+
+
+def remove_stress(phone):
+    return re.sub(
+        r"[012]$",
+        "",
         phone
     )
 
+
+def get_stress(phone):
+    match = re.search(
+        r"([012])$",
+        phone
+    )
+
+    if not match:
+        return None
+
+    return match.group(1)
+
+
+def split_phone_syllables(phones):
+    syllables = []
+    current = []
+
+    for phone in phones:
+        current.append(phone)
+
+        if get_stress(phone) is not None:
+            syllables.append(current)
+            current = []
+
+    if current:
+        if syllables:
+            syllables[-1].extend(current)
+        else:
+            syllables.append(current)
+
+    return syllables
+
+
+def phone_to_ipa(phone):
+    base_phone = remove_stress(phone)
+
     return CMU_TO_IPA.get(
-        base,
-        base
+        base_phone,
+        base_phone
     )
 
 
 def syllable_to_ipa(phones):
-    result = ""
-
-    stress = None
+    stress = ""
 
     for phone in phones:
-        if phone.endswith("1"):
+        phone_stress = get_stress(phone)
+
+        if phone_stress == "1":
             stress = "ˈ"
+            break
 
-        elif phone.endswith("2"):
-            if stress is None:
-                stress = "ˌ"
+        if phone_stress == "2":
+            stress = "ˌ"
 
-        result += phoneme_to_ipa(
-            phone
-        )
+    sounds = "".join(
+        phone_to_ipa(phone)
+        for phone in phones
+    )
 
-    if stress:
-        return stress + result
-
-    return result
+    return stress + sounds
 
 
 def pronunciation_to_ipa(phones):
-    syllables = split_into_syllables(
+    syllables = split_phone_syllables(
         phones
     )
 
     return "".join(
-        syllable_to_ipa(
-            syllable
-        )
+        syllable_to_ipa(syllable)
         for syllable in syllables
     )
 
 
-# =========================================================
-# VISUAL SPELLING SYLLABLES
-# =========================================================
+def find_vowel_groups(word):
+    return list(
+        re.finditer(
+            r"[aeiouy]+",
+            word,
+            re.IGNORECASE
+        )
+    )
 
-def split_word_using_syllable_count(
+
+def fallback_split(word, count):
+    if count <= 1:
+        return [word]
+
+    if not word:
+        return []
+
+    length = len(word)
+
+    result = []
+    start = 0
+
+    for index in range(count):
+        remaining_parts = count - index
+        remaining_chars = length - start
+
+        if index == count - 1:
+            result.append(
+                word[start:]
+            )
+            break
+
+        size = max(
+            1,
+            remaining_chars //
+            remaining_parts
+        )
+
+        result.append(
+            word[
+                start:start + size
+            ]
+        )
+
+        start += size
+
+    return [
+        part
+        for part in result
+        if part
+    ]
+
+
+def split_spelling_by_syllables(
     word,
     syllable_count
 ):
     """
-    Create a simple visual spelling breakdown
-    matching the number of actual pronunciation
-    syllables.
+    Create a readable spelling split that
+    corresponds to the CMU pronunciation
+    syllable count.
 
-    This is a display aid, not the pronunciation source.
+    Examples:
+
+        hello  -> hel | lo
+        banana -> ba | na | na
+        student -> student
     """
 
     word = str(word).strip()
@@ -363,29 +244,9 @@ def split_word_using_syllable_count(
     if syllable_count <= 1:
         return [word]
 
-    letters = list(word)
+    groups = find_vowel_groups(word)
 
-    if len(letters) <= syllable_count:
-        return letters
-
-    # -----------------------------------------------------
-    # Find vowel groups.
-    # -----------------------------------------------------
-
-    vowel_pattern = re.compile(
-        r"[aeiouy]+",
-        re.IGNORECASE
-    )
-
-    vowel_matches = list(
-        vowel_pattern.finditer(
-            word
-        )
-    )
-
-    # If we don't have enough vowel groups,
-    # fall back to an even visual split.
-    if len(vowel_matches) < syllable_count:
+    if len(groups) < syllable_count:
         return fallback_split(
             word,
             syllable_count
@@ -393,41 +254,31 @@ def split_word_using_syllable_count(
 
     boundaries = []
 
-    for match in vowel_matches[
-        :syllable_count - 1
-    ]:
-        boundary = match.end()
+    for index in range(
+        syllable_count - 1
+    ):
+        current = groups[index]
+        next_group = groups[index + 1]
 
-        # Move the boundary back slightly when
-        # there is a consonant cluster.
-        while (
-            boundary < len(word)
-            and word[boundary].lower()
-            not in "aeiouy"
-        ):
-            if (
-                boundary + 1 < len(word)
-                and word[
-                    boundary + 1
-                ].lower()
-                in "aeiouy"
-            ):
-                break
+        current_end = current.end()
+        next_start = next_group.start()
 
-            boundary += 1
+        consonants = word[
+            current_end:next_start
+        ]
 
-        boundaries.append(
-            boundary
-        )
+        if not consonants:
+            boundary = current_end
 
-    if not boundaries:
-        return fallback_split(
-            word,
-            syllable_count
-        )
+        elif len(consonants) == 1:
+            boundary = next_start
+
+        else:
+            boundary = next_start - 1
+
+        boundaries.append(boundary)
 
     result = []
-
     start = 0
 
     for boundary in boundaries:
@@ -441,7 +292,12 @@ def split_word_using_syllable_count(
         word[start:]
     )
 
-    # Make sure the count matches.
+    result = [
+        part
+        for part in result
+        if part
+    ]
+
     if len(result) != syllable_count:
         return fallback_split(
             word,
@@ -451,56 +307,27 @@ def split_word_using_syllable_count(
     return result
 
 
-def fallback_split(
-    word,
-    count
-):
-    if count <= 1:
-        return [word]
+def get_pronunciation(word):
+    normalized = (
+        str(word)
+        .strip()
+        .lower()
+    )
 
-    length = len(word)
+    if not normalized:
+        return None
 
-    result = []
-
-    start = 0
-
-    for index in range(count):
-        remaining_parts = count - index
-
-        remaining_chars = (
-            length - start
+    pronunciations = (
+        pronouncing.phones_for_word(
+            normalized
         )
+    )
 
-        size = max(
-            1,
-            remaining_chars //
-            remaining_parts
-        )
+    if not pronunciations:
+        return None
 
-        if index == count - 1:
-            result.append(
-                word[start:]
-            )
-        else:
-            result.append(
-                word[
-                    start:
-                    start + size
-                ]
-            )
+    return pronunciations[0]
 
-        start += size
-
-    return [
-        part
-        for part in result
-        if part
-    ]
-
-
-# =========================================================
-# BUILD ENTRY
-# =========================================================
 
 def build_entry(entry):
     word = str(
@@ -514,26 +341,10 @@ def build_entry(entry):
         word
     )
 
-    entry_copy = dict(
-        entry
-    )
-
-    existing = entry.get(
-        "pronunciation",
-        {}
-    )
-
-    if not isinstance(
-        existing,
-        dict
-    ):
-        existing = {}
+    result = dict(entry)
 
     if not pronunciation:
-        entry_copy[
-            "pronunciation"
-        ] = {
-            **existing,
+        result["pronunciation"] = {
             "source": {
                 "name":
                     "CMU Pronouncing Dictionary",
@@ -542,45 +353,42 @@ def build_entry(entry):
             }
         }
 
-        return entry_copy
+        return result
 
     phones = pronunciation.split()
 
-    phoneme_syllables = (
-        split_into_syllables(
+    phone_syllables = (
+        split_phone_syllables(
             phones
         )
     )
 
     syllable_count = len(
-        phoneme_syllables
+        phone_syllables
     )
 
     ipa_syllables = [
         syllable_to_ipa(
             syllable
         )
-        for syllable in phoneme_syllables
+        for syllable in phone_syllables
     ]
 
-    ipa = pronunciation_to_ipa(
-        phones
-    )
-
-    visual_syllables = (
-        split_word_using_syllable_count(
+    spelling_syllables = (
+        split_spelling_by_syllables(
             word,
             syllable_count
         )
     )
 
-    entry_copy[
-        "pronunciation"
-    ] = {
-        "ipa": ipa,
+    result["pronunciation"] = {
+        "ipa":
+            pronunciation_to_ipa(
+                phones
+            ),
 
         "syllables":
-            visual_syllables,
+            spelling_syllables,
 
         "ipaSyllables":
             ipa_syllables,
@@ -591,18 +399,13 @@ def build_entry(entry):
         "source": {
             "name":
                 "CMU Pronouncing Dictionary",
-
             "available":
                 True
         }
     }
 
-    return entry_copy
+    return result
 
-
-# =========================================================
-# MAIN
-# =========================================================
 
 def main():
     print(
@@ -650,9 +453,7 @@ def main():
         else:
             missing += 1
 
-        output.append(
-            result
-        )
+        output.append(result)
 
         if (
             index % 100 == 0
@@ -690,19 +491,15 @@ def main():
     print(
         "========================================"
     )
-
     print(
         f"Total words: {len(output):,}"
     )
-
     print(
         f"Matched:     {matched:,}"
     )
-
     print(
         f"Missing:     {missing:,}"
     )
-
     print(
         f"Output:      {OUTPUT_FILE}"
     )
