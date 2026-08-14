@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import "./PronunciationPopup.css";
 
 const TONE_INFO = {
@@ -17,7 +17,20 @@ const TONE_CURVE = {
   5: "·",
 };
 
-function splitMandarinPinyin(pinyin = "") {
+function getSyllables(vocabulary) {
+  const generatedSyllables =
+    vocabulary.pronunciation?.syllables;
+
+  if (
+    Array.isArray(generatedSyllables) &&
+    generatedSyllables.length > 0
+  ) {
+    return generatedSyllables;
+  }
+
+  const pinyin =
+    vocabulary.pronunciation?.pinyin || "";
+
   return pinyin
     .trim()
     .split(/\s+/)
@@ -34,7 +47,8 @@ function PronunciationPopup({
     useState(0);
 
   const isMandarin =
-    languageId?.toLowerCase() === "mandarin";
+    languageId?.toLowerCase() ===
+    "mandarin";
 
   const pinyin =
     vocabulary.pronunciation?.pinyin || "";
@@ -42,18 +56,23 @@ function PronunciationPopup({
   const tones =
     vocabulary.pronunciation?.tones || [];
 
-  const syllables = useMemo(
-    () => splitMandarinPinyin(pinyin),
-    [pinyin]
-  );
+  const syllables =
+    getSyllables(vocabulary);
 
   const toneDataMatches =
     syllables.length === tones.length;
 
+  /*
+    Reset the active syllable whenever
+    another vocabulary item is opened.
+  */
   useEffect(() => {
     setActiveSyllable(0);
   }, [vocabulary.id]);
 
+  /*
+    Allow Escape to close the popup.
+  */
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.key === "Escape") {
@@ -74,6 +93,13 @@ function PronunciationPopup({
     };
   }, [onClose]);
 
+  /*
+    Automatically move through the syllables
+    when the Mandarin popup is open.
+
+    The animation only runs when we have
+    matching syllable and tone data.
+  */
   useEffect(() => {
     if (
       !isMandarin ||
@@ -100,6 +126,13 @@ function PronunciationPopup({
     syllables.length,
   ]);
 
+  /*
+    Play an individual Mandarin syllable.
+
+    We use the corresponding Chinese character
+    when possible instead of trying to make the
+    browser pronounce the pinyin itself.
+  */
   const playSyllable = (index) => {
     const characters = [
       ...vocabulary.word,
@@ -108,7 +141,8 @@ function PronunciationPopup({
     );
 
     const character =
-      characters[index] || vocabulary.word;
+      characters[index] ||
+      vocabulary.word;
 
     setActiveSyllable(index);
 
@@ -119,6 +153,9 @@ function PronunciationPopup({
     );
   };
 
+  /*
+    Play the complete word.
+  */
   const playWord = (rate = 0.65) => {
     onSpeak(
       vocabulary.word,
@@ -127,13 +164,23 @@ function PronunciationPopup({
     );
   };
 
+  /*
+    English and Japanese will eventually use
+    their own pronunciation modules.
+
+    We deliberately do not display Mandarin
+    pronunciation information for them.
+  */
   if (!isMandarin) {
     return (
       <div
         className="pronunciation-modal"
+        role="dialog"
+        aria-modal="true"
         onMouseDown={(event) => {
           if (
-            event.target === event.currentTarget
+            event.target ===
+            event.currentTarget
           ) {
             onClose();
           }
@@ -159,7 +206,8 @@ function PronunciationPopup({
             </span>
 
             <h2>
-              {languageId === "japanese"
+              {languageId?.toLowerCase() ===
+              "japanese"
                 ? "Japanese pronunciation"
                 : "English pronunciation"}
             </h2>
@@ -182,7 +230,8 @@ function PronunciationPopup({
       aria-labelledby="pronunciation-title"
       onMouseDown={(event) => {
         if (
-          event.target === event.currentTarget
+          event.target ===
+          event.currentTarget
         ) {
           onClose();
         }
@@ -200,7 +249,9 @@ function PronunciationPopup({
 
         <div className="pronunciation-hero">
           <div
-            className={`pronunciation-lynx tone-${tones[activeSyllable] || 0}`}
+            className={`pronunciation-lynx tone-${
+              tones[activeSyllable] || 0
+            }`}
           >
             <span className="lynx-tail">
               〰
@@ -217,6 +268,7 @@ function PronunciationPopup({
 
           <div className="lynx-speech">
             <span>🐾</span>
+
             <strong>
               Let&apos;s break it down!
             </strong>
@@ -233,7 +285,8 @@ function PronunciationPopup({
           </h2>
 
           <p className="popup-pinyin">
-            {pinyin}
+            {pinyin ||
+              "Pronunciation unavailable"}
           </p>
 
           <span className="popup-meaning">
@@ -241,71 +294,88 @@ function PronunciationPopup({
           </span>
         </div>
 
-        <div className="pronunciation-syllables">
-          {syllables.map(
-            (syllable, index) => {
-              const tone = tones[index];
+        {syllables.length > 0 ? (
+          <div className="pronunciation-syllables">
+            {syllables.map(
+              (syllable, index) => {
+                const tone = tones[index];
 
-              return (
-                <button
-                  type="button"
-                  key={`${vocabulary.id}-${index}`}
-                  className={`pronunciation-syllable ${
-                    index === activeSyllable
-                      ? "is-active"
-                      : ""
-                  }`}
-                  onClick={() =>
-                    playSyllable(index)
-                  }
-                >
-                  <span className="syllable-number">
-                    {String(index + 1).padStart(
-                      2,
-                      "0"
-                    )}
-                  </span>
+                return (
+                  <button
+                    type="button"
+                    key={`${vocabulary.id}-${index}`}
+                    className={`pronunciation-syllable ${
+                      index ===
+                      activeSyllable
+                        ? "is-active"
+                        : ""
+                    }`}
+                    onClick={() =>
+                      playSyllable(index)
+                    }
+                  >
+                    <span className="syllable-number">
+                      {String(
+                        index + 1
+                      ).padStart(2, "0")}
+                    </span>
 
-                  <strong>
-                    {syllable}
-                  </strong>
+                    <strong>
+                      {syllable}
+                    </strong>
 
-                  {tone ? (
-                    <>
-                      <span
-                        className={`syllable-tone tone-${tone}`}
-                      >
-                        TONE {tone}
-                      </span>
+                    {tone ? (
+                      <>
+                        <span
+                          className={`syllable-tone tone-${tone}`}
+                        >
+                          TONE {tone}
+                        </span>
 
-                      <span className="tone-curve">
-                        {TONE_CURVE[tone]}
-                      </span>
+                        <span className="tone-curve">
+                          {
+                            TONE_CURVE[
+                              tone
+                            ]
+                          }
+                        </span>
 
+                        <small>
+                          {
+                            TONE_INFO[
+                              tone
+                            ]
+                          }
+                        </small>
+                      </>
+                    ) : (
                       <small>
-                        {TONE_INFO[tone]}
+                        Tone data unavailable
                       </small>
-                    </>
-                  ) : (
-                    <small>
-                      Tone data unavailable
-                    </small>
-                  )}
+                    )}
 
-                  <span className="syllable-audio">
-                    🔊
-                  </span>
-                </button>
-              );
-            }
-          )}
-        </div>
+                    <span className="syllable-audio">
+                      🔊
+                    </span>
+                  </button>
+                );
+              }
+            )}
+          </div>
+        ) : (
+          <div className="pronunciation-empty">
+            <p>
+              Syllable information is not
+              available for this word yet.
+            </p>
+          </div>
+        )}
 
         {!toneDataMatches &&
           syllables.length > 0 && (
             <p className="pronunciation-note">
-              The curriculum does not provide one
-              tone value for every displayed
+              The curriculum does not provide
+              one tone value for every displayed
               syllable, so VerbaLynx will not
               guess the missing information.
             </p>
@@ -315,7 +385,9 @@ function PronunciationPopup({
           <button
             type="button"
             className="pronunciation-main-button"
-            onClick={() => playWord(0.65)}
+            onClick={() =>
+              playWord(0.65)
+            }
           >
             <span>▶</span>
             Listen
@@ -324,7 +396,9 @@ function PronunciationPopup({
           <button
             type="button"
             className="pronunciation-slow-button"
-            onClick={() => playWord(0.4)}
+            onClick={() =>
+              playWord(0.4)
+            }
           >
             Slow
           </button>

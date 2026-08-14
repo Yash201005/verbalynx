@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
+
 import BackButton from "../components/BackButton";
 import ReviewCard from "../components/ReviewCard";
 import PronunciationPopup from "../components/PronunciationPopup";
+import CharacterPractice from "../components/CharacterPractice";
+
 import curriculum from "../../data/processed/curriculum/mandarin/curriculum.json";
 
 const TONE_INFO = {
@@ -50,20 +53,21 @@ function Lesson() {
     on English, Japanese, or other language
     lesson routes.
   */
+
   const isMandarin =
     languageId?.toLowerCase() ===
     "mandarin";
 
   /*
-    Lesson IDs currently look like:
+    Lesson IDs:
 
     hsk1-unit-1-l1
     hsk1-unit-1-l2
     hsk1-unit-2-l1
 
-    The lesson number is extracted dynamically
-    rather than only matching l1.
+    The lesson number is extracted dynamically.
   */
+
   const lesson = useMemo(() => {
     if (!isMandarin) {
       return null;
@@ -118,6 +122,7 @@ function Lesson() {
   /*
     Close speech when leaving the page.
   */
+
   useEffect(() => {
     return () => {
       if ("speechSynthesis" in window) {
@@ -127,9 +132,10 @@ function Lesson() {
   }, []);
 
   /*
-    Close the pronunciation popup when
-    navigating to another lesson.
+    Close the pronunciation popup
+    when navigating to another lesson.
   */
+
   useEffect(() => {
     setPronunciationOpen(false);
   }, [lessonId]);
@@ -152,10 +158,11 @@ function Lesson() {
   };
 
   /*
-    Do not allow the Mandarin lesson component
-    to display Mandarin content on another
-    language route.
+    Prevent the Mandarin lesson component
+    from displaying Mandarin content on
+    another language route.
   */
+
   if (!isMandarin) {
     return (
       <div className="lesson-page">
@@ -205,9 +212,15 @@ function Lesson() {
 
   return (
     <div className="lesson-page">
+
       <BackButton />
 
+      {/* --------------------------------------------------
+          LESSON HEADER
+          -------------------------------------------------- */}
+
       <header className="lesson-header">
+
         <p className="lesson-level">
           {curriculum.level}
         </p>
@@ -225,9 +238,15 @@ function Lesson() {
           Learn this word with pronunciation,
           meaning, tones and real examples.
         </p>
+
       </header>
 
+      {/* --------------------------------------------------
+          LESSON PROGRESS
+          -------------------------------------------------- */}
+
       <div className="lesson-progress">
+
         <div>
           <span>
             Unit {unit.unitNumber}
@@ -240,6 +259,7 @@ function Lesson() {
         </div>
 
         <div className="lesson-progress-bar">
+
           <div
             style={{
               width: `${
@@ -249,24 +269,40 @@ function Lesson() {
               }%`,
             }}
           />
+
         </div>
+
       </div>
 
+      {/* --------------------------------------------------
+          VOCABULARY CARD
+          -------------------------------------------------- */}
+
       <article className="vocabulary-card">
+
         <div className="vocabulary-main">
+
+          {/* ------------------------------------------------
+              WORD + PRONUNCIATION + TONES
+              ------------------------------------------------ */}
+
           <div className="vocabulary-top">
+
             <div className="word-section">
+
               <h2 className="vocabulary-word">
                 {vocabulary.word}
               </h2>
 
               <div className="pronunciation-row">
+
                 <span className="vocabulary-pinyin">
                   {vocabulary.pronunciation?.pinyin ||
                     "Pronunciation unavailable"}
                 </span>
 
                 <button
+                  type="button"
                   className="audio-button"
                   onClick={() =>
                     playPronunciation(
@@ -283,6 +319,7 @@ function Lesson() {
                 </button>
 
                 <button
+                  type="button"
                   className="slow-audio-button"
                   onClick={() =>
                     playPronunciation(
@@ -304,16 +341,20 @@ function Lesson() {
                 >
                   🐾 Learn pronunciation
                 </button>
+
               </div>
+
             </div>
 
             {tones.length > 0 && (
               <div className="tone-box">
+
                 <span className="tone-label">
                   TONES
                 </span>
 
                 <div className="tone-numbers">
+
                   {tones.map(
                     (tone, index) => (
                       <span
@@ -324,21 +365,31 @@ function Lesson() {
                       </span>
                     )
                   )}
+
                 </div>
 
                 <div className="tone-description">
+
                   {tones
                     .map(
                       (tone) =>
                         TONE_INFO[tone]
                     )
                     .join(" · ")}
+
                 </div>
+
               </div>
             )}
+
           </div>
 
+          {/* ------------------------------------------------
+              MEANING
+              ------------------------------------------------ */}
+
           <div className="meaning-box">
+
             <span className="content-label">
               MEANING
             </span>
@@ -346,10 +397,17 @@ function Lesson() {
             <strong>
               {vocabulary.meaning}
             </strong>
+
           </div>
 
+          {/* ------------------------------------------------
+              PRONUNCIATION GUIDE
+              ------------------------------------------------ */}
+
           <div className="pronunciation-guide">
+
             <div className="guide-header">
+
               <span className="content-label">
                 PRONUNCIATION GUIDE
               </span>
@@ -357,9 +415,11 @@ function Lesson() {
               <span className="guide-note">
                 Listen first, then repeat
               </span>
+
             </div>
 
             <div className="guide-content">
+
               <div className="guide-pinyin">
                 {
                   vocabulary.pronunciation
@@ -368,12 +428,14 @@ function Lesson() {
               </div>
 
               <div className="guide-tones">
+
                 {tones.map(
                   (tone, index) => (
                     <div
                       className="guide-tone"
                       key={`${vocabulary.id}-guide-${index}`}
                     >
+
                       <span>
                         Syllable{" "}
                         {index + 1}
@@ -386,17 +448,42 @@ function Lesson() {
                       <small>
                         {TONE_INFO[tone]}
                       </small>
+
                     </div>
                   )
                 )}
+
               </div>
+
             </div>
+
           </div>
+
+          {/* ------------------------------------------------
+              CHARACTER / STROKE PRACTICE
+              ------------------------------------------------ */}
+
+          <CharacterPractice
+            character={vocabulary.word}
+            pinyin={
+              vocabulary.pronunciation?.pinyin
+            }
+            tone={
+              vocabulary.pronunciation?.tones?.[0]
+            }
+          />
+
+          {/* ------------------------------------------------
+              REAL EXAMPLES
+              ------------------------------------------------ */}
 
           {vocabulary.examples?.length > 0 && (
             <div className="vocabulary-examples">
+
               <div className="examples-header">
+
                 <div>
+
                   <span className="content-label">
                     REAL EXAMPLES
                   </span>
@@ -404,18 +491,24 @@ function Lesson() {
                   <p>
                     Examples from Tatoeba
                   </p>
+
                 </div>
+
               </div>
 
               <div className="example-list">
+
                 {vocabulary.examples.map(
                   (example) => (
                     <div
                       className="example-item"
                       key={example.id}
                     >
+
                       <div className="example-text-row">
+
                         <div>
+
                           <p className="example-chinese">
                             {example.text}
                           </p>
@@ -427,9 +520,11 @@ function Lesson() {
                               }
                             </p>
                           )}
+
                         </div>
 
                         <button
+                          type="button"
                           className="example-audio"
                           onClick={() =>
                             playPronunciation(
@@ -441,19 +536,33 @@ function Lesson() {
                         >
                           🔊
                         </button>
+
                       </div>
+
                     </div>
                   )
                 )}
+
               </div>
+
             </div>
           )}
+
         </div>
+
       </article>
+
+      {/* --------------------------------------------------
+          SPACED REPETITION
+          -------------------------------------------------- */}
 
       <ReviewCard
         vocabulary={vocabulary}
       />
+
+      {/* --------------------------------------------------
+          PRONUNCIATION POPUP
+          -------------------------------------------------- */}
 
       {pronunciationOpen && (
         <PronunciationPopup
@@ -465,6 +574,7 @@ function Lesson() {
           onSpeak={playPronunciation}
         />
       )}
+
     </div>
   );
 }

@@ -6,7 +6,7 @@ from pathlib import Path
 
 BASE_DIR = Path("data/processed/curriculum/mandarin")
 
-HSK_FILE = BASE_DIR / "hsk.json"
+HSK_FILE = BASE_DIR / "hsk_with_tones.json"
 
 CMN_FILE = Path("data/raw/tatoeba/cmn_sentences.tsv")
 ENG_FILE = Path("data/raw/tatoeba/eng_sentences.tsv")

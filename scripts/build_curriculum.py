@@ -2,136 +2,135 @@ import json
 from pathlib import Path
 
 
-INPUT_FILE = Path(
-    "data/processed/curriculum/mandarin/hsk_with_examples.json"
+BASE_DIR = Path(
+    "data/processed/curriculum/mandarin"
 )
 
-OUTPUT_FILE = Path(
-    "data/processed/curriculum/mandarin/curriculum.json"
+INPUT_FILE = (
+    BASE_DIR /
+    "hsk1_with_examples.json"
+)
+
+OUTPUT_FILE = (
+    BASE_DIR /
+    "curriculum.json"
 )
 
 WORDS_PER_UNIT = 20
 
 
 TOPICS = [
-    ("Greetings & Introductions", [
-        "你好",
-        "您好",
-        "再见",
-        "谢谢",
-        "不客气",
-        "对不起",
-        "没关系",
-        "请",
-        "叫",
-        "名字",
-    ]),
+    (
+        "Greetings & Introductions",
+        [
+            "你好",
+            "您好",
+            "再见",
+            "谢谢",
+            "不客气",
+            "对不起",
+            "没关系",
+            "请",
+            "喂",
+            "叫",
+        ],
+    ),
 
-    ("People & Family", [
-        "我",
-        "你",
-        "他",
-        "她",
-        "我们",
-        "你们",
-        "他们",
-        "爸爸",
-        "妈妈",
-        "朋友",
-        "学生",
-        "老师",
-        "家",
-    ]),
+    (
+        "People & Family",
+        [
+            "我",
+            "你",
+            "他",
+            "她",
+            "我们",
+            "你们",
+            "他们",
+            "爸爸",
+            "妈妈",
+            "朋友",
+            "学生",
+            "老师",
+            "家",
+        ],
+    ),
 
-    ("Numbers & Time", [
-        "一",
-        "二",
-        "三",
-        "四",
-        "五",
-        "六",
-        "七",
-        "八",
-        "九",
-        "十",
-        "今天",
-        "明天",
-        "昨天",
-        "现在",
-        "时间",
-    ]),
+    (
+        "Numbers & Time",
+        [
+            "一",
+            "二",
+            "三",
+            "四",
+            "五",
+            "六",
+            "七",
+            "八",
+            "九",
+            "今天",
+            "明天",
+            "昨天",
+            "现在",
+            "时间",
+        ],
+    ),
 
-    ("Food & Drinks", [
-        "吃",
-        "喝",
-        "水",
-        "茶",
-        "饭",
-        "米饭",
-        "水果",
-        "喜欢",
-        "买",
-    ]),
-
-    ("Daily Life", [
-        "去",
-        "来",
-        "回",
-        "看",
-        "听",
-        "说",
-        "读",
-        "写",
-        "学习",
-        "工作",
-        "住",
-        "睡觉",
-    ]),
-
-    ("Places & Directions", [
-        "家",
-        "学校",
-        "商店",
-        "医院",
-        "这里",
-        "那里",
-        "上",
-        "下",
-        "里",
-        "外",
-    ]),
-
-    ("Descriptions", [
-        "大",
-        "小",
-        "多",
-        "少",
-        "好",
-        "坏",
-        "高",
-        "热",
-        "冷",
-        "漂亮",
-        "忙",
-    ]),
+    (
+        "Food & Drinks",
+        [
+            "吃",
+            "喝",
+            "说",
+            "读",
+            "写",
+            "喜欢",
+            "工作",
+            "学习",
+            "做",
+            "多",
+            "少",
+            "好",
+            "大",
+            "高",
+            "热",
+            "冷",
+            "漂亮",
+            "忙",
+        ],
+    ),
 ]
+
+
+def load_json(path):
+    with path.open(
+        "r",
+        encoding="utf-8"
+    ) as file:
+        return json.load(file)
 
 
 def main():
     # ---------------------------------------------------------
-    # Load HSK vocabulary
+    # Load HSK 1 vocabulary with examples AND pronunciation
     # ---------------------------------------------------------
 
-    with INPUT_FILE.open(
-        "r",
-        encoding="utf-8"
-    ) as file:
-        vocabulary = json.load(file)
+    vocabulary = load_json(
+        INPUT_FILE
+    )
+
+    print(
+        f"Loaded {len(vocabulary):,} "
+        f"HSK 1 vocabulary entries"
+    )
+
+    # ---------------------------------------------------------
+    # Index vocabulary by word
+    # ---------------------------------------------------------
 
     hsk1 = {
         entry["word"]: entry
         for entry in vocabulary
-        if entry["level"] == "HSK 1"
+        if entry.get("level") == "HSK 1"
     }
 
     used = set()
@@ -141,7 +140,10 @@ def main():
     # 1. Build themed units
     # ---------------------------------------------------------
 
-    for unit_number, (title, words) in enumerate(
+    for unit_number, (
+        title,
+        words
+    ) in enumerate(
         TOPICS,
         start=1
     ):
@@ -156,18 +158,23 @@ def main():
             if word in used:
                 continue
 
-            vocabulary_entries.append(entry)
+            vocabulary_entries.append(
+                entry
+            )
+
             used.add(word)
 
         if not vocabulary_entries:
             continue
 
         units.append({
-            "id": f"hsk1-unit-{unit_number}",
+            "id": (
+                f"hsk1-unit-{unit_number}"
+            ),
             "level": "HSK 1",
             "unitNumber": unit_number,
             "title": title,
-            "vocabulary": vocabulary_entries
+            "vocabulary": vocabulary_entries,
         })
 
     # ---------------------------------------------------------
@@ -195,17 +202,21 @@ def main():
             start:start + WORDS_PER_UNIT
         ]
 
-        unit_number = len(units) + 1
+        unit_number = (
+            len(units) + 1
+        )
 
         units.append({
-            "id": f"hsk1-unit-{unit_number}",
+            "id": (
+                f"hsk1-unit-{unit_number}"
+            ),
             "level": "HSK 1",
             "unitNumber": unit_number,
             "title": (
                 f"Everyday Words "
                 f"{remaining_unit_number}"
             ),
-            "vocabulary": chunk
+            "vocabulary": chunk,
         })
 
         remaining_unit_number += 1
@@ -217,7 +228,7 @@ def main():
     curriculum = {
         "language": "mandarin",
         "level": "HSK 1",
-        "units": units
+        "units": units,
     }
 
     # ---------------------------------------------------------
@@ -241,11 +252,40 @@ def main():
         )
 
     # ---------------------------------------------------------
-    # 6. Print summary
+    # 6. Verify pronunciation data survived
+    # ---------------------------------------------------------
+
+    pronunciation_count = 0
+    syllable_count = 0
+    tone_count = 0
+
+    for unit in units:
+        for entry in unit["vocabulary"]:
+            pronunciation = entry.get(
+                "pronunciation",
+                {}
+            )
+
+            if pronunciation:
+                pronunciation_count += 1
+
+            if pronunciation.get(
+                "syllables"
+            ):
+                syllable_count += 1
+
+            if pronunciation.get(
+                "tones"
+            ):
+                tone_count += 1
+
+    # ---------------------------------------------------------
+    # 7. Print summary
     # ---------------------------------------------------------
 
     print(
-        f"Created {len(units)} HSK 1 units"
+        f"Created {len(units)} "
+        f"HSK 1 units"
     )
 
     for unit in units:
@@ -254,6 +294,30 @@ def main():
             f'{unit["title"]}: '
             f'{len(unit["vocabulary"])} words'
         )
+
+    print()
+    print(
+        "Pronunciation verification:"
+    )
+
+    print(
+        f"  Entries with pronunciation: "
+        f"{pronunciation_count:,}"
+    )
+
+    print(
+        f"  Entries with syllables: "
+        f"{syllable_count:,}"
+    )
+
+    print(
+        f"  Entries with tones: "
+        f"{tone_count:,}"
+    )
+
+    print(
+        f"\nOutput: {OUTPUT_FILE}"
+    )
 
 
 if __name__ == "__main__":
